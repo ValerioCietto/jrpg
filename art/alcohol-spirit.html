@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alcohol Spirit · JRPG Art</title>
+<link rel="stylesheet" href="menu.css">
+<script src="menu.js" defer></script>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:#10191b;color:#e4efea;font-family:system-ui,sans-serif}main{width:min(900px,100%)}
+a{color:#9ed7bd;text-underline-offset:4px}header{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:22px 0 20px}.eyebrow{margin:0 0 8px;color:#a7c0a8;font-size:11px;letter-spacing:.24em;text-transform:uppercase}h1{margin:0;font:400 clamp(30px,5vw,44px) Georgia,serif}.badge{border:1px solid #42564d;border-radius:24px;padding:8px 12px;font-size:11px;color:#b4c8ab;white-space:nowrap}
+.stage{position:relative;overflow:hidden;border:1px solid #42564d;border-radius:16px;background:#182a2b}canvas{display:block;width:100%;aspect-ratio:900/562}.label,.status{position:absolute;left:22px;right:16px;font-size:10px;letter-spacing:.16em;pointer-events:none}.label{top:20px;color:#abc4b8}.status{bottom:20px;color:#e3d5a5;text-transform:uppercase}.status:before{content:'';display:inline-block;width:6px;height:6px;background:#a8e1b0;border-radius:50%;margin-right:10px}
+.controls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:16px}button{min-height:56px;border:1px solid #42564d;border-radius:10px;background:#20332e;color:#e3eddf;font:600 14px system-ui;cursor:pointer}button:hover{background:#304b40}button[aria-pressed=true]{background:#3d5140;border-color:#b4cf93}button:focus-visible,a:focus-visible{outline:2px solid #e9cf89;outline-offset:4px}kbd{margin-left:8px;font:10px system-ui;color:#aec2b5;border:1px solid #586e61;border-radius:4px;padding:2px 5px}footer{display:flex;justify-content:space-between;gap:12px;margin-top:16px;font-size:12px;color:#9fb3a9;line-height:1.6}
+@media(max-width:520px){body{padding:16px}.badge,kbd{display:none}.controls{grid-template-columns:repeat(2,1fr)}footer{flex-direction:column;gap:2px}.label,.status{left:14px;font-size:9px}}
+</style>
+</head>
+<body><main>
+<div data-art-menu><a class="art-menu-fallback" href="menu.html">Browse Characters, Enemies and Scenery</a></div>
+<header><div><p class="eyebrow">Enemy study / Swamp</p><h1>Alcohol Spirit</h1></div><span class="badge">WISP · HIGHLY FLAMMABLE</span></header>
+<div class="stage">
+<canvas id="alcohol-spirit" role="img" aria-label="A tipsy turquoise wisp floating at hip height, holding a green bottle labeled XXX.">Canvas support is needed to display Alcohol Spirit.</canvas>
+<div class="label">THE SODDEN MARSH / LAST ORDERS</div>
+<div class="status" id="status" role="status">Idle · unsteady spirits</div>
+</div>
+<div class="controls" role="group" aria-label="Alcohol Spirit animations">
+<button type="button" data-mode="idle" aria-pressed="true">Idle <kbd>I</kbd></button>
+<button type="button" data-mode="attack" aria-pressed="false">Bottle throw <kbd>A</kbd></button>
+<button type="button" data-mode="flame" aria-pressed="false">Flame <kbd>F</kbd></button>
+<button type="button" data-mode="die" aria-pressed="false">Die <kbd>D</kbd></button>
+</div>
+<footer><span>One for the road. One for the afterlife.</span><span>Click an animation to replay · Idle to revive.</span></footer>
+</main><script src="alcohol-spirit-scene.js"></script></body>
+</html>
