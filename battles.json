@@ -548,7 +548,7 @@
       ]
     },
     "stone-golem": {
-      "name": "Stone Golem",
+      "name": "Rock Golem",
       "hp": 165,
       "attack": 28,
       "defense": 28,
