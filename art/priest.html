@@ -11,6 +11,9 @@
   .character-links a[aria-current="page"] { color:#eee9da; font-weight:700 }
   .character-links a:focus-visible { outline:2px solid #ffe0a0; outline-offset:4px }
 </style>
+<style>
+.equipment-heading{display:flex;justify-content:space-between;gap:12px;margin-top:18px;color:#b8a1dc;font-size:12px}.armor-options{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:8px}.armor-options button{flex-direction:column;gap:5px;padding:12px 8px}.armor-detail{font-size:11px;font-weight:400;color:#b7adc9}@media(max-width:640px){.armor-options{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 <link rel="stylesheet" href="menu.css">
 <script src="menu.js" defer></script>
 </head>
@@ -22,6 +25,13 @@
 <canvas id="priest" role="img" aria-label="Animated dark elf priest with violet skin, white hair, pointed ears, and a golden healer staff in a moonlit sanctuary.">Your browser needs canvas support to display the priest.</canvas>
 <div class="label">THE MOON SANCTUARY / SILVERWOOD</div>
 <div class="status" id="status" role="status">Idle · a quiet prayer</div>
+</div>
+<div class="equipment-heading"><span>Robes</span><span id="armor-status" role="status">City · Moonkeeper vestments</span></div>
+<div class="controls armor-options" role="group" aria-label="Priest robe choice">
+<button type="button" data-armor="sewer" aria-pressed="false">Sewer <span class="armor-detail">Ragged monk robe</span></button>
+<button type="button" data-armor="city" aria-pressed="true">City <span class="armor-detail">Moonkeeper vestments</span></button>
+<button type="button" data-armor="castle" aria-pressed="false">Castle <span class="armor-detail">Red and gold armor</span></button>
+<button type="button" data-armor="darklord" aria-pressed="false">Dark Lord <span class="armor-detail">Black, violet and spikes</span></button>
 </div>
 <div class="controls" role="group" aria-label="Priest stance">
 <button type="button" data-mode="idle" aria-pressed="true">Idle <kbd>I</kbd></button>
@@ -46,6 +56,25 @@
   const TAU=Math.PI*2, durations={heal:1.6,strike:.85,'greater-heal':2.5,bolt:1.25};
   const labels={idle:'Idle · a quiet prayer',run:'Run · swift footsteps',heal:'Heal · restoring light',strike:'Strike · staff sweep','greater-heal':'Greater Heal · sanctuary of light',bolt:'Cast Bolt · lunar spark'};
   let mode='idle',stance='idle',age=0,time=0,last=null,travel=0;
+  let armor='city';
+  const armorButtons=[...document.querySelectorAll('[data-armor]')];
+  const robes={
+    sewer:{label:'Sewer',detail:'Ragged monk robe',base:'#65503a',shadow:'#3c3026',fold:'#907659',panel:'#827052',trim:'#b49b70',hem:'#64523b',sleeve:'#756046',cuff:'#9b8664',rear:'#493a2b',rearCuff:'#756449',belt:'#b49b70',gem:'#897451'},
+    city:{label:'City',detail:'Moonkeeper vestments',base:'#493565',shadow:'#352744',fold:'#715784',panel:'#e0d8e7',trim:'#d3ba78',hem:'#c2a766',sleeve:'#6d5187',cuff:'#ded6e6',rear:'#4c3d61',rearCuff:'#968ba9',belt:'#c7ad6a',gem:'#8ce2de'},
+    castle:{label:'Castle',detail:'Armored red and gold robe',base:'#8e2634',shadow:'#4d1724',fold:'#c6474b',panel:'#be4344',trim:'#f2d078',hem:'#d6a64e',sleeve:'#922e3b',cuff:'#c5a35b',rear:'#591d2a',rearCuff:'#8a703f',belt:'#edc468',gem:'#ffdf88'},
+    darklord:{label:'Dark Lord',detail:'Black robe with violet lines and spikes',base:'#17131f',shadow:'#09080f',fold:'#654184',panel:'#262032',trim:'#b278f0',hem:'#9a59da',sleeve:'#21182d',cuff:'#352544',rear:'#110d19',rearCuff:'#251a32',belt:'#a369dc',gem:'#d5a3ff'}
+  };
+  function describeRobe(){
+    const robe=robes[armor];
+    document.querySelector('#armor-status').textContent=robe.label+' · '+robe.detail;
+    canvas.setAttribute('aria-label','Animated dark elf priest with violet skin, white hair and a golden healer staff, wearing '+robe.detail.toLowerCase()+'. '+labels[mode]);
+  }
+  armorButtons.forEach(button=>button.addEventListener('click',()=>{
+    armor=button.dataset.armor;
+    armorButtons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.armor===armor)));
+    describeRobe();
+  }));
+  describeRobe();
   const clamp=x=>Math.max(0,Math.min(1,x));
   const ease=x=>{x=clamp(x);return x*x*(3-2*x);};
   const joint=(x,y,length,angle)=>[x+Math.sin(angle)*length,y+Math.cos(angle)*length];
@@ -140,7 +169,7 @@
     mode=next;age=0;
     buttons.forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
     status.textContent=labels[mode];
-    canvas.setAttribute('aria-label','Dark elf priest with violet skin, pointed ears, white hair and a golden healer staff. '+labels[mode]);
+    describeRobe();
   }
   buttons.forEach(b=>b.addEventListener('click',()=>select(b.dataset.mode)));
   const keys={i:'idle',r:'run','1':'heal','2':'strike','3':'greater-heal','4':'bolt',' ':'strike'};
@@ -167,6 +196,7 @@
     for(let i=0;i<14;i++){const x=(i*63+Math.sin(time*.3+i)*12)%800,y=330+Math.sin(time*.6+i*2)*40;glow(x,y,7,'#8cdcd12a');ellipse(x,y,1.2,1.2,'#95d9cf');}
   }
   function character(){
+    const robe=robes[armor];
     const running=mode==='run', phase=time*10, p=durations[mode]?clamp(age/durations[mode]):0;
     const casting=mode==='heal'||mode==='greater-heal'||mode==='bolt';
     const lift=casting?Math.sin(Math.PI*clamp(p/.85)):0;
@@ -183,8 +213,8 @@
     if(running){runLeg(false,phase+Math.PI);runLeg(true,phase);}
     else{standingLeg(false);standingLeg(true);}
     const hem=running?-8+Math.sin(phase-.5)*5:Math.sin(time*2)*3;
-    line([rearArm.shoulder,rearArm.elbow,rearArm.hand],'#4c3d61',13);
-    line([rearArm.elbow,rearArm.hand],'#968ba9',9);
+    line([rearArm.shoulder,rearArm.elbow,rearArm.hand],robe.rear,13);
+    line([rearArm.elbow,rearArm.hand],robe.rearCuff,9);
     // The same right-facing robe profile is used in every animation: curved
     // chest on the right, fitted waist, and a trailing back hem on the left.
     ctx.beginPath();ctx.moveTo(-12,-150);
@@ -195,10 +225,10 @@
     ctx.bezierCurveTo(21+hem*.2,-55,15,-78,12,-102);
     ctx.quadraticCurveTo(11,-111,18,-119);
     ctx.bezierCurveTo(25,-133,18,-146,7,-151);
-    ctx.closePath();ctx.fillStyle='#493565';ctx.fill();
+    ctx.closePath();ctx.fillStyle=robe.base;ctx.fill();
     // Back folds follow the cloth toward the trailing hem.
-    path([[-12,-143],[-8,-116],[-9,-101],[-13,-77],[-17+hem*.6,-43],[-24+hem,-28],[-30+hem,-27],[-20,-67],[-13,-105]],'#352744');
-    line([[-5,-96],[-7,-72],[-10+hem*.5,-48],[-16+hem,-30]],'#715784',2);
+    path([[-12,-143],[-8,-116],[-9,-101],[-13,-77],[-17+hem*.6,-43],[-24+hem,-28],[-30+hem,-27],[-20,-67],[-13,-105]],robe.shadow);
+    line([[-5,-96],[-7,-72],[-10+hem*.5,-48],[-16+hem,-30]],robe.fold,2);
     // One narrow ivory front panel follows the right edge in side view.
     ctx.beginPath();ctx.moveTo(10,-146);
     ctx.bezierCurveTo(22,-135,18,-124,11,-112);
@@ -208,14 +238,40 @@
     ctx.bezierCurveTo(13,-54,7,-80,5,-101);
     ctx.quadraticCurveTo(3,-112,9,-123);
     ctx.quadraticCurveTo(16,-134,6,-144);
-    ctx.closePath();ctx.fillStyle='#e0d8e7';ctx.fill();
-    line([[10,-145],[17,-134],[14,-123],[8,-108],[9,-96],[15,-65],[22+hem*.2,-33]],'#d3ba78',1.5);
-    line([[-28+hem,-27],[-8+hem*.5,-25],[23+hem*.2,-31]],'#c2a766',2);
+    ctx.closePath();ctx.fillStyle=robe.panel;ctx.fill();
+    line([[10,-145],[17,-134],[14,-123],[8,-108],[9,-96],[15,-65],[22+hem*.2,-33]],robe.trim,1.5);
+    if(armor!=='sewer')line([[-28+hem,-27],[-8+hem*.5,-25],[23+hem*.2,-31]],robe.hem,2);
     // Collar and fasteners sit on the front edge of the profile.
-    path([[-13,-149],[-6,-155],[9,-153],[16,-143],[9,-136],[-9,-141]],'#6d5187');
-    line([[-12,-105],[0,-103],[12,-104]],'#c7ad6a',4);
-    ellipse(12,-104,2.5,5,'#8ce2de');
-    ellipse(12,-143,3.5,6,'#e3d3a6');ellipse(14,-145,3,5,'#6d5187');
+    path([[-13,-149],[-6,-155],[9,-153],[16,-143],[9,-136],[-9,-141]],robe.sleeve);
+    line([[-12,-105],[0,-103],[12,-104]],robe.belt,4);
+    ellipse(12,-104,2.5,5,robe.gem);
+    ellipse(12,-143,3.5,6,armor==='city'?'#e3d3a6':robe.trim);ellipse(14,-145,3,5,robe.sleeve);
+    if(armor==='sewer'){
+      // Folded monk's cowl, rope belt, sewn patches and loose rag strips.
+      path([[-16,-153],[-24,-146],[-21,-132],[-7,-137],[8,-149]],'#8b7455');
+      line([[-19,-145],[-11,-142],[5,-149]],'#b39a74',2);
+      line([[5,-103],[3,-84],[8,-77]],robe.belt,2);
+      for(const [x,y] of [[-9,-82],[3,-51]]){
+        path([[x-6,y-8],[x+6,y-6],[x+5,y+8],[x-7,y+6]],'#a08a67');
+        for(let i=0;i<3;i++)line([[x-7+i*5,y-9],[x-6+i*5,y-5]],'#43392b',1);
+      }
+      for(let i=0;i<5;i++){
+        const x=-28+i*10+hem*(1-i*.18),y=-33-i%2*3;
+        path([[x,y],[x+9,y-1],[x+7,y+13+i%2*7],[x+3,y+8],[x,y+15]],i%2?robe.panel:robe.base);
+      }
+    }
+    if(armor==='castle'){
+      path([[-10,-139],[12,-140],[20,-130],[12,-112],[-9,-115]],'#a67c3b');
+      path([[-7,-136],[10,-137],[15,-129],[9,-116],[-6,-118]],'#dfbd6b');
+      line([[5,-135],[6,-122],[10,-119]],'#fff0b0',2);
+      for(let i=0;i<3;i++)path([[-12-i*2,-99+i*10],[11+i*2,-99+i*10],[14+i*2,-91+i*10],[-15-i*2,-91+i*10]],i%2?'#9f783c':'#cda756');
+    }
+    if(armor==='darklord'){
+      line([[-12,-132],[-5,-116],[-3,-98],[-15+hem*.5,-46]],robe.trim,2);
+      line([[2,-97],[7,-73],[12+hem*.2,-39]],'#7345a1',2);
+      path([[-13,-147],[-23,-168],[-5,-153],[-2,-171],[5,-151],[14,-162],[13,-141]],'#3f2d51');
+      line([[-23,-168],[-5,-153],[-2,-171]],robe.trim,1);
+    }
     // White hair silhouette, violet profile and visibly long pointed ear.
     path([[-19,-184],[-27,-162],[-30,-126],[-14,-140],[2,-160],[22,-174],[17,-194],[-3,-202]],'#b7b7d7');
     line([[1,-161],[1,-146]],'#8866a7',12);
@@ -228,8 +284,17 @@
     // Both arms use the running shoulder anchors and rotate to the staff grips.
     const frontShoulder=frontArm.shoulder,frontElbow=frontArm.elbow,frontHand=frontArm.hand;
     const [gripX,gripY]=frontHand;
-    line([frontShoulder,frontElbow,frontHand],'#6d5187',15);
-    line([frontElbow,frontHand],'#ded6e6',10);
+    line([frontShoulder,frontElbow,frontHand],robe.sleeve,15);
+    line([frontElbow,frontHand],robe.cuff,10);
+    if(armor==='castle'||armor==='darklord'){
+      const [sx,sy]=frontShoulder;
+      path([[sx-11,sy-5],[sx-6,sy-13],[sx+7,sy-12],[sx+13,sy-3],[sx+7,sy+7],[sx-8,sy+5]],armor==='castle'?'#c49c50':'#30223f');
+      line([[sx-10,sy-4],[sx,sy-8],[sx+11,sy-2]],robe.trim,2);
+      line([frontElbow,frontHand],robe.trim,2);
+      if(armor==='darklord'){
+        for(const offset of [-7,1,9])path([[sx+offset-4,sy-8],[sx+offset-5,sy-25+Math.abs(offset)],[sx+offset+3,sy-8]],'#8052a5');
+      }
+    }
     ctx.save();ctx.translate(...pose.grip);ctx.rotate(pose.angle);
     // Grip is 75% down from the top; the lower quarter extends below the hand.
     if(staff.complete&&staff.naturalWidth)ctx.drawImage(staff,-23,-staffGrip,46,staffLength);

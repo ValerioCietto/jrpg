@@ -18,6 +18,10 @@
   .status { position:absolute; bottom:20px; left:22px; display:flex; align-items:center; gap:8px; font-size:11px; letter-spacing:.12em; text-transform:uppercase }
   .status::before { content:""; width:6px; height:6px; border-radius:50%; background:#e2be78; box-shadow:0 0 12px #e2be7880 }
   .controls { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px }
+  .face-heading { display:flex; justify-content:space-between; gap:12px; margin-top:18px; color:#c8ad73; font-size:12px }
+  .faces { margin-top:8px; grid-template-columns:repeat(3,minmax(0,1fr)) }
+  .outfits { margin-top:8px; grid-template-columns:repeat(4,minmax(0,1fr)) }
+  @media(max-width:520px) { .outfits { grid-template-columns:repeat(2,minmax(0,1fr)) } }
   .attacks { grid-template-columns:repeat(6,minmax(0,1fr)); margin-top:10px }
   .attacks button { flex-wrap:wrap; gap:8px; padding:10px }
   button { cursor:pointer; display:flex; justify-content:center; align-items:center; gap:12px; min-height:58px; border:1px solid #39474c; border-radius:10px; background:#1c272c; color:#d0dbd8; font:600 14px system-ui; transition:background .15s,border-color .15s }
@@ -45,6 +49,19 @@
     <div class="label">THE OLD FOREST / TRAINING GROUNDS</div>
     <div class="status" id="status" role="status">Idle · at the ready</div>
   </div>
+  <div class="face-heading"><span>Clothing</span><span id="outfit-status" role="status">City · current outfit</span></div>
+  <div class="controls outfits" role="group" aria-label="Princess clothing">
+    <button type="button" data-outfit="sewers" aria-pressed="false">Sewers</button>
+    <button type="button" data-outfit="city" aria-pressed="true">City</button>
+    <button type="button" data-outfit="castle" aria-pressed="false">Castle</button>
+    <button type="button" data-outfit="darklord" aria-pressed="false">Dark Lord</button>
+  </div>
+  <div class="face-heading"><span>Face</span><span id="face-status" role="status">Current · original profile</span></div>
+  <div class="controls faces" role="group" aria-label="Princess face options">
+    <button type="button" data-face="current" aria-pressed="true">Current</button>
+    <button type="button" data-face="remake" aria-pressed="false">Remake</button>
+    <button type="button" data-face="remake2" aria-pressed="false">Remake 2</button>
+  </div>
   <div class="controls" role="group" aria-label="Hero stance">
     <button type="button" data-mode="idle" aria-pressed="true">Idle <kbd>I</kbd></button>
     <button type="button" data-mode="run" aria-pressed="false">run <kbd>R</kbd></button>
@@ -68,6 +85,33 @@
   const status = document.querySelector('#status');
   const TAU = Math.PI * 2;
   let mode = 'idle', stance = 'idle', elapsed = 0, attackTime = 0, last = null, travel = 0;
+  let face = 'current';
+  let outfit = 'city';
+  const outfits = {
+    sewers:{label:'Sewers · ragged clothes, bare arms and legs',arm:'#c39470',fore:'#d6ad80',rear:'#b68e65',rearFore:'#b68e65',leg:'#d6ad80',rearLeg:'#b68e65',knee:'#d6ad80',rearKnee:'#b68e65',trim:'#a68b61'},
+    city:{label:'City · current outfit',arm:'#4e7650',fore:'#77986a',rear:'#264839',rearFore:'#9c7756',leg:'#354537',rearLeg:'#27372c',knee:'#a8bbc0',rearKnee:'#738c94',trim:'#d4dfb0'},
+    castle:{label:'Castle · red and gold armor',arm:'#9e303d',fore:'#cba656',rear:'#641f2d',rearFore:'#92713c',leg:'#992d39',rearLeg:'#611d2a',knee:'#e2bc67',rearKnee:'#a07d42',trim:'#ffe2a0'},
+    darklord:{label:'Dark Lord · black and violet magic dress',arm:'#22172f',fore:'#322044',rear:'#17101f',rearFore:'#261932',leg:'#24182f',rearLeg:'#150f1e',knee:'#442b5b',rearKnee:'#2e1c3e',trim:'#b27aef'}
+  };
+  const outfitButtons = [...document.querySelectorAll('[data-outfit]')];
+  outfitButtons.forEach(button => button.addEventListener('click', () => {
+    outfit = button.dataset.outfit;
+    outfitButtons.forEach(option => option.setAttribute('aria-pressed', String(option.dataset.outfit === outfit)));
+    document.querySelector('#outfit-status').textContent = outfits[outfit].label;
+    describeFace();
+  }));
+  const faceButtons = [...document.querySelectorAll('[data-face]')];
+  function describeFace() {
+    const description = {current:'Current · original profile',remake:'Remake · emerald eye and sculpted profile',remake2:'Remake 2 · open smile'}[face];
+    document.querySelector('#face-status').textContent = description;
+    canvas.setAttribute('aria-label', 'Animated wood elf rogue healer princess wielding a magic dagger in a forest clearing. '+outfits[outfit].label+'. '+description+'. '+status.textContent);
+  }
+  faceButtons.forEach(button => button.addEventListener('click', () => {
+    face = button.dataset.face;
+    faceButtons.forEach(option => option.setAttribute('aria-pressed', String(option.dataset.face === face)));
+    describeFace();
+  }));
+  describeFace();
   const daggerImage = new Image();
   daggerImage.src = 'magic-dagger.png';
   const attacks = {
@@ -86,6 +130,7 @@
     mode = next;
     buttons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mode === mode)));
     status.textContent = attacks[mode]?.label || {idle:'Idle · at the ready',run:'Running · onward'}[mode];
+    describeFace();
   }
   buttons.forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
   addEventListener('keydown', event => {
@@ -179,10 +224,12 @@
       knee=[hip[0]+(dx*along+dy*height)/distance,
             hip[1]+(dy*along-dx*height)/distance];
     }
-    line([hip,knee], '#14252c',22); line([hip,knee],front?'#354537':'#27372c',16);
-    oval(...knee,10,9,front?'#a8bbc0':'#738c94');
-    line([knee,ankle],'#17262b',19); line([knee,ankle],front?'#577452':'#3b543e',13);
-    line([[knee[0]+3,knee[1]+6],[ankle[0]+3,ankle[1]-5]],front?'#b4c5c6':'#7f969a',3);
+    const clothes=outfits[outfit], bare=outfit==='sewers';
+    line([hip,knee],bare?'#986b4f':'#14252c',bare?18:22); line([hip,knee],front?clothes.leg:clothes.rearLeg,16);
+    oval(...knee,bare?8:10,bare?8:9,front?clothes.knee:clothes.rearKnee);
+    line([knee,ankle],bare?'#986b4f':'#17262b',bare?15:19);
+    line([knee,ankle],outfit==='city'?(front?'#577452':'#3b543e'):(front?clothes.leg:clothes.rearLeg),13);
+    if(!bare)line([[knee[0]+3,knee[1]+6],[ankle[0]+3,ankle[1]-5]],outfit==='city'?(front?'#b4c5c6':'#7f969a'):clothes.trim,3);
 
     ctx.save(); ctx.translate(...ankle); ctx.rotate(ankleRotation(angle-bend,phase));
 shape([[-10,-8],[8,-8],[13,3],[24,8],[23,15],[-11,15]],front?'#43392f':'#302e28');
@@ -323,7 +370,80 @@ shape([[-10,-8],[8,-8],[13,3],[24,8],[23,15],[-11,15]],front?'#43392f':'#302e28'
     }
   }
 
+  function remadeFace() {
+    // The same neck anchor and right-facing silhouette fit every existing pose.
+    shape([[-8,-98],[8,-97],[10,-80],[2,-73],[-10,-81]],'#c38e68');
+    ctx.beginPath(); ctx.moveTo(-15,-123);
+    ctx.bezierCurveTo(-7,-136,8,-134,14,-124);
+    ctx.quadraticCurveTo(17,-119,15,-113);
+    ctx.quadraticCurveTo(16,-109,22,-104);
+    ctx.quadraticCurveTo(24,-102,18,-101);
+    ctx.quadraticCurveTo(17,-99,19,-97);
+    ctx.quadraticCurveTo(20,-95,17,-94);
+    ctx.quadraticCurveTo(16,-88,10,-88);
+    ctx.bezierCurveTo(1,-88,-8,-94,-13,-102);
+    ctx.closePath(); ctx.fillStyle='#e9bd96'; ctx.fill();
+    ctx.strokeStyle='#684632'; ctx.lineWidth=1.3; ctx.stroke();
+    shape([[-13,-113],[-4,-105],[1,-95],[11,-89],[4,-89],[-9,-97]],'#cf976f',null);
+    oval(8,-103,5,2.6,'#df9c80');
+    line([[17,-102],[20,-102]],'#aa7257',.8);
+    // A larger almond eye, emerald iris and clear upper lid read at stage scale.
+    ctx.beginPath(); ctx.moveTo(5,-111);
+    ctx.quadraticCurveTo(10,-116,16,-111);
+    ctx.quadraticCurveTo(11,-107,5,-111);
+    ctx.closePath(); ctx.fillStyle='#fff1d9'; ctx.fill();
+    oval(12,-111,2.1,2.5,'#36836a');
+    oval(12.5,-111,1,1.9,'#183e36');
+    oval(13,-112,0.65,0.75,'#ffffff');
+    line([[5,-111],[9,-113],[14,-113],[17,-115]],'#513629',1.3);
+    line([[5,-118],[10,-120],[15,-118]],'#70412b',1.6);
+    if(face === 'remake2') {
+      // An open smile with a light upper tooth edge and a rounded lower lip.
+      ctx.beginPath(); ctx.moveTo(9,-99);
+      ctx.quadraticCurveTo(14,-97,19,-99);
+      ctx.quadraticCurveTo(17,-92,13,-94);
+      ctx.quadraticCurveTo(10,-95,9,-99);
+      ctx.closePath(); ctx.fillStyle='#713f3c'; ctx.fill();
+      ctx.strokeStyle='#a45f5b'; ctx.lineWidth=.9; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(10,-98.5);
+      ctx.quadraticCurveTo(14,-97,18,-98.5);
+      ctx.lineTo(17,-96.8); ctx.quadraticCurveTo(13,-96,11,-97);
+      ctx.closePath(); ctx.fillStyle='#fff1db'; ctx.fill();
+      line([[13,-93.5],[16,-93.5]],'#cf8b7c',1.2);
+    } else {
+      ctx.beginPath(); ctx.moveTo(10,-97);
+      ctx.quadraticCurveTo(14,-95,18,-97);
+      ctx.strokeStyle='#a45f5b'; ctx.lineWidth=1.2; ctx.stroke();
+      line([[13,-93],[16,-93]],'#f4d1aa',1);
+    }
+    // Swept auburn hair opens the brow and joins the existing long hair.
+    ctx.beginPath(); ctx.moveTo(-18,-103);
+    ctx.bezierCurveTo(-28,-117,-23,-139,-9,-143);
+    ctx.bezierCurveTo(4,-148,18,-140,21,-129);
+    ctx.quadraticCurveTo(15,-126,10,-130);
+    ctx.quadraticCurveTo(4,-135,-3,-125);
+    ctx.quadraticCurveTo(-11,-115,-10,-101);
+    ctx.closePath(); ctx.fillStyle='#70412b'; ctx.fill();
+    ctx.strokeStyle='#35291f'; ctx.lineWidth=1.7; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-18,-125);
+    ctx.bezierCurveTo(-12,-139,1,-142,13,-133);
+    ctx.strokeStyle='#b77949'; ctx.lineWidth=2.2; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-8,-111);
+    ctx.quadraticCurveTo(-18,-114,-31,-121);
+    ctx.quadraticCurveTo(-25,-106,-16,-102);
+    ctx.quadraticCurveTo(-6,-98,-6,-106);
+    ctx.closePath(); ctx.fillStyle='#e3b68c'; ctx.fill();
+    ctx.strokeStyle='#805b40'; ctx.lineWidth=1.3; ctx.stroke();
+    line([[-25,-116],[-16,-108],[-10,-106]],'#ad7554',1.2);
+    oval(-10,-101,2,2.5,'#e5c675');
+    oval(-10,-98,1.5,2,'#8ee7b5');
+    line([[-16,-131],[-2,-135],[17,-127]],'#e5c675',2.5);
+    shape([[12,-129],[17,-139],[22,-129],[17,-123]],'#8ee7b5','#d5b85f',1);
+    line([[17,-135],[19,-129]],'#e7fff0',1.2);
+  }
+
   function hero(t) {
+    const clothes=outfits[outfit], bare=outfit==='sewers';
     const running=mode==='run', attacking=Boolean(attacks[mode]), cycle=t*10;
     const idle=mode==='idle';
     const idleFlex=idle?(1-Math.cos(t*1.8))*.5:0;
@@ -362,12 +482,13 @@ shape([[-10,-8],[8,-8],[13,3],[24,8],[23,15],[-11,15]],front?'#43392f':'#302e28'
     // Rear arm and glove.
     const rearElbow=joint(-5,-49,32,running?-.65*Math.sin(cycle)-.3:.2-action*.7+idleElbow);
     const rearHand=joint(...rearElbow,28,-.3-idleElbow);
-    line([[-5,-49],rearElbow],'#264839',16); line([rearElbow,rearHand],'#9c7756',11); oval(...rearHand,8,9,'#b68e65');
+    line([[-5,-49],rearElbow],clothes.rear,bare?13:16); line([rearElbow,rearHand],clothes.rearFore,11); oval(...rearHand,8,9,'#b68e65');
     leg([5,5],running?Math.sin(cycle)*.85:attacking?.17+action*.55:.17,running?.3+Math.max(0,Math.cos(cycle))*1.25:.04,true,cycle,frontKneeDrop);
     // Compact torso in profile, with the chest facing right.
     ctx.save(); ctx.scale(.62,.78);
 
     // Side silhouette: the chest projects right, above a fitted waist and fuller hips.
+    if(outfit==='city') {
     shape([[-22,-36],[21,-36],[34,-12],[39,23],[9,30],[0,13],[-7,30],[-37,23],[-33,-12]],'#315d42');
     line([[-35,22],[-8,27],[0,12],[10,27],[36,23]],'#c0a269',3);
     shape([[-25,-77],[9,-82],[29,-72],[36,-61],[34,-51],[26,-43],[20,-28],[-21,-28],[-24,-45],[-29,-61]],'#497552');
@@ -375,10 +496,47 @@ shape([[-10,-8],[8,-8],[13,3],[24,8],[23,15],[-11,15]],front?'#43392f':'#302e28'
     shape([[-21,-73],[-8,-70],[-5,-41],[-16,-38],[-24,-59]],'#58794f',null);
     line([[0,-70],[21,-66],[27,-57],[23,-49]],'#d9e5de',2);
     shape([[-21,-34],[21,-34],[22,-24],[-22,-24]],'#4c392f');
+    } else if(bare) {
+      // Sleeveless patched tunic with a torn skirt, leaving limbs exposed.
+      shape([[-20,-76],[6,-80],[25,-68],[29,-55],[18,-31],[29,-8],[35,26],[22,20],[14,34],[4,24],[-7,32],[-16,21],[-32,27],[-28,-8],[-18,-31],[-25,-57]],'#7f6950','#483b2d');
+      shape([[-18,-68],[-6,-71],[-5,-40],[-16,-36],[-22,-55]],'#a28c68',null);
+      line([[-19,-29],[0,-25],[21,-28]],'#b7a17a',4);
+      line([[6,-26],[4,-6],[10,2]],'#b7a17a',2);
+      shape([[-19,-9],[-4,-12],[0,9],[-17,12]],'#b49a71','#594935',1);
+      for(let i=0;i<4;i++)line([[-19+i*5,-12],[-18+i*5,-7]],'#4c3e2d',1);
+      line([[18,5],[23,18],[21,25]],'#493b2b',2);
+    } else if(outfit==='castle') {
+      shape([[-22,-35],[21,-35],[34,-10],[39,25],[13,32],[0,16],[-12,32],[-38,24],[-32,-10]],'#9d293b');
+      line([[-35,23],[-12,29],[0,15],[14,29],[36,24]],'#edc36c',3);
+      shape([[-25,-77],[9,-82],[29,-72],[36,-61],[30,-45],[20,-28],[-21,-28],[-29,-61]],'#b79049');
+      shape([[-19,-72],[8,-77],[26,-66],[29,-56],[16,-38],[-16,-38],[-23,-58]],'#e2bd69','#805a2d');
+      line([[1,-71],[20,-63],[23,-56],[13,-43]],'#fff0b5',3);
+      shape([[-20,-34],[20,-34],[23,-24],[-23,-24]],'#734328');
+      for(let i=0;i<3;i++)shape([[-24-i*3,-22+i*11],[23+i*3,-22+i*11],[28+i*3,-13+i*11],[-28-i*3,-13+i*11]],i%2?'#b88a40':'#d7b05f','#79572c',1);
+    } else {
+      const sway=running?Math.sin(cycle-1)*9-12:Math.sin(t*2)*4;
+      // Long split skirt follows the stride; violet seams frame the black silk.
+      shape([[-23,-35],[20,-35],[30,-8],[45+sway,87],[19+sway,81],[8,38],[-2,12],[-12,48],[-29+sway,88],[-53+sway,78],[-34,-5]],'#17111f','#0e0b16');
+      shape([[-24,-76],[8,-82],[29,-72],[35,-60],[26,-43],[20,-28],[-21,-28],[-29,-61]],'#261a34');
+      shape([[-19,-72],[-5,-69],[-2,-42],[-16,-34],[-25,-58]],'#3b254e',null);
+      line([[-21,-73],[-5,-66],[6,-47],[0,-30]],'#ad74ea',2.5);
+      line([[8,-77],[26,-66],[29,-57],[18,-40],[0,-30]],'#ad74ea',2.5);
+      line([[-20,-28],[0,-23],[20,-28]],'#c58bff',3);
+      line([[-20,-23],[-27,10],[-43+sway,76],[-29+sway,83]],'#9155ca',2);
+      line([[19,-23],[24,10],[36+sway,77],[22+sway,78]],'#9155ca',2);
+      shape([[-5,-25],[0,-33],[6,-25],[0,-17]],'#ddbcff','#9b63d2',1);
+      for(let i=0;i<3;i++){
+        const x=-31+sway+i*3,y=38+i*13;
+        line([[x,y-4],[x+3,y],[x,y+4],[x-3,y],[x,y-4]],'#c795ff',1.2);
+      }
+    }
     ctx.restore();
     // Right-facing profile: one eye, a projecting nose, and a visible ear.
     ctx.save(); ctx.translate(0,17);
 
+    if(face === 'remake' || face === 'remake2') {
+      remadeFace();
+    } else {
     shape([[-8,-97],[9,-97],[11,-80],[2,-73],[-10,-81]],'#c38e68');
     // Soft forehead, small nose and rounded chin in a right-facing profile.
     ctx.beginPath(); ctx.moveTo(-16,-124);
@@ -430,6 +588,7 @@ shape([[-10,-8],[8,-8],[13,3],[24,8],[23,15],[-11,15]],front?'#43392f':'#302e28'
     line([[-15,-129],[0,-132],[18,-124]],'#e5c675',3);
     shape([[13,-126],[18,-136],[23,-126],[18,-120]],'#8ee7b5','#d5b85f',1);
     line([[18,-132],[20,-126]],'#d9ffe8',1.2);
+    }
     ctx.restore();
     // Leading dagger arm: anticipation, fast cut, then recovery.
     let upper=running?.5+Math.sin(cycle)*.45:.35, fore=running?1.8:1.0, blade=running?.55:.3;
@@ -442,10 +601,13 @@ shape([[-10,-8],[8,-8],[13,3],[24,8],[23,15],[-11,15]],front?'#43392f':'#302e28'
       elbow=joint(2,-49,32,upper); hand=joint(...elbow,30,fore);
     }
 
-    line([[2,-49],elbow],'#152831',20); line([[2,-49],elbow],'#4e7650',14);
-    oval(2,-52,10,9,'#a9bdc1'); line([[-6,-55],[2,-59],[10,-56]],'#e2e8d9',2);
-    line([elbow,hand],'#1b3038',16); line([elbow,hand],'#77986a',11);
-    line([[elbow[0]+3,elbow[1]],[hand[0]+3,hand[1]]],'#d4dfb0',3);
+    line([[2,-49],elbow],bare?'#986b4f':'#152831',bare?16:20); line([[2,-49],elbow],clothes.arm,14);
+    if(!bare) {
+      oval(2,-52,10,9,outfit==='city'?'#a9bdc1':outfit==='castle'?'#d9b565':'#392449');
+      line([[-6,-55],[2,-59],[10,-56]],outfit==='city'?'#e2e8d9':clothes.trim,2);
+    }
+    line([elbow,hand],bare?'#986b4f':'#1b3038',bare?13:16); line([elbow,hand],clothes.fore,11);
+    if(!bare)line([[elbow[0]+3,elbow[1]],[hand[0]+3,hand[1]]],clothes.trim,3);
 
     if(pose) abilityEffect(mode,p,hand,t);
     dagger(...hand,blade);
