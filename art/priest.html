@@ -51,7 +51,7 @@
   const canvas=document.querySelector('#priest'), ctx=canvas.getContext('2d');
   const buttons=[...document.querySelectorAll('[data-mode]')], status=document.querySelector('#status');
   const staff=new Image();
-  staff.src='healer-staff.png';
+  staff.src='source-images/healer-staff.png';
   staff.onerror=()=>{document.querySelector('#asset-status').textContent='Healer staff PNG could not load. Reload to retry.';};
   const TAU=Math.PI*2, durations={heal:1.6,strike:.85,'greater-heal':2.5,bolt:1.25};
   const labels={idle:'Idle · a quiet prayer',run:'Run · swift footsteps',heal:'Heal · restoring light',strike:'Strike · staff sweep','greater-heal':'Greater Heal · sanctuary of light',bolt:'Cast Bolt · lunar spark'};

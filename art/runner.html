@@ -19,6 +19,8 @@
   .status::before { content:""; width:6px; height:6px; border-radius:50%; background:#e2be78; box-shadow:0 0 12px #e2be7880 }
   .controls { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:16px }
   .controls[aria-label="Hero stance"] { grid-template-columns:repeat(2,minmax(0,1fr)) }
+  .weapon-heading { margin:16px 0 0; color:#afc3bd; font-size:12px; letter-spacing:.06em }
+  .weapons { grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:8px }
   .attacks { grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:10px }
   .attacks button { flex-wrap:wrap; gap:8px; padding:10px }
   button { cursor:pointer; display:flex; justify-content:center; align-items:center; gap:12px; min-height:58px; border:1px solid #39474c; border-radius:10px; background:#1c272c; color:#d0dbd8; font:600 14px system-ui; transition:background .15s,border-color .15s }
@@ -27,7 +29,7 @@
   button:focus-visible { outline:2px solid #ffe0a0; outline-offset:4px }
   kbd { font:10px system-ui; color:#a2aaa2; border:1px solid #53605e; border-radius:4px; padding:2px 5px }
   footer { display:flex; justify-content:space-between; gap:16px; margin-top:16px; color:#8d9f9f; font-size:12px; line-height:1.6 }
-  @media(max-width:640px) { .attacks { grid-template-columns:repeat(2,minmax(0,1fr)) } }
+  @media(max-width:640px) { .attacks, .weapons { grid-template-columns:repeat(2,minmax(0,1fr)) } }
   @media(max-width:520px) { body { padding:16px } header { align-items:start } .badge { display:none } kbd { display:none } footer { flex-direction:column; gap:3px } .label { top:14px; left:14px } }
   .character-links { display:flex; flex-wrap:wrap; gap:12px; margin-bottom:18px; font-size:13px }
   .character-links a { color:#e2be78; text-underline-offset:4px }
@@ -42,9 +44,21 @@
   <div data-art-menu><a class="art-menu-fallback" href="menu.html">Browse Characters, Enemies and Scenery</a></div>
   <header><div><p class="eyebrow">Character study / 05</p><h1>The Runner</h1></div><span class="badge">HUMAN · SWORDSMAN</span></header>
   <div class="stage">
-    <canvas id="hero" role="img" aria-label="Animated Runner seen from the side, facing right, with a compact torso, wearing a teal tunic, light armor, and a flowing amber scarf, wielding a sword in a forest clearing.">Your browser needs canvas support to display the hero.</canvas>
+    <canvas id="hero" role="img" aria-label="Animated Runner seen from the side, facing right, with a compact torso, wearing a teal tunic and light armor, wielding a sword in a forest clearing.">Your browser needs canvas support to display the hero.</canvas>
     <div class="label">THE OLD FOREST / COURIER TRAIL</div>
     <div class="status" id="status" role="status">Idle · at the ready</div>
+  </div>
+  <p class="weapon-heading" id="weapon-status" role="status">Weapon: Default sword</p>
+  <div class="controls weapons" role="group" aria-label="Weapon choice">
+    <button type="button" data-weapon="sword" aria-pressed="true">Default sword</button>
+    <button type="button" data-weapon="cutlass" aria-pressed="false">Cutlass</button>
+    <button type="button" data-weapon="dagger" aria-pressed="false">Magic dagger</button>
+    <button type="button" data-weapon="scythe" aria-pressed="false">Dark scythe</button>
+    <button type="button" data-weapon="hammer" aria-pressed="false">Basic hammer</button>
+    <button type="button" data-weapon="tribalSword" aria-pressed="false">Big tribal sword</button>
+    <button type="button" data-weapon="staff" aria-pressed="false">Healer staff</button>
+    <button type="button" data-weapon="pungolo" aria-pressed="false">Pungolo</button>
+    <button type="button" data-weapon="imageSword" aria-pressed="false">Sword</button>
   </div>
   <div class="controls" role="group" aria-label="Hero stance">
     <button type="button" data-mode="idle" aria-pressed="true">Idle <kbd>I</kbd></button>
@@ -55,7 +69,7 @@
     <button type="button" data-mode="jump" aria-pressed="false">Jump obstacle <kbd>J</kbd></button>
     <button type="button" data-mode="fastRun" aria-pressed="false">Fast run <kbd>F</kbd></button>
   </div>
-  <div class="controls attacks" role="group" aria-label="Sword attacks">
+  <div class="controls attacks" role="group" aria-label="Weapon attacks">
     <button type="button" data-mode="rageLunge" aria-pressed="false">Running Rage Lunge <kbd>7</kbd></button>
     <button type="button" data-mode="runningUpwardSlash" aria-pressed="false">Running upward slash <kbd>6</kbd></button>
     <button type="button" data-mode="runningAttack" aria-pressed="false">Running attack <kbd>5</kbd></button>
@@ -73,6 +87,36 @@
   const ctx = canvas.getContext('2d');
   const buttons = [...document.querySelectorAll('[data-mode]')];
   const status = document.querySelector('#status');
+  const weaponButtons=[...document.querySelectorAll('[data-weapon]')];
+  const weaponStatus=document.querySelector('#weapon-status');
+  let weapon='sword';
+  const weapons={
+    sword:{label:'Default sword',reach:114},
+    hammer:{label:'Basic hammer',reach:100,file:'basic_hammer.png',x:-21.6,y:-100,width:43.2,height:124.8},
+    tribalSword:{label:'Big tribal sword',reach:136.8,file:'big_tribal_sword.png',x:-11.2,y:-136.8,width:24.8,height:171.2},
+    staff:{label:'Healer staff',reach:107.35,file:'healer-staff.png',x:-21.85,y:-107.35,width:43.7,height:143.45},
+    pungolo:{label:'Pungolo',reach:108,file:'pungolo.png',x:-6,y:-108,width:12.75,height:133.5},
+    imageSword:{label:'Sword',reach:117.3,file:'sword.png',x:-10.2,y:-117.3,width:20.4,height:140.25},
+    cutlass:{label:'Cutlass',reach:99,file:'cutlass.png',x:-5.1,y:-98.6,width:10.2,height:126.65},
+    dagger:{label:'Magic dagger',reach:63,file:'magic-dagger.png',x:-7,y:-63,width:14,height:77},
+    scythe:{label:'Dark scythe',reach:109,file:'dark-scythe.png',x:-24.2,y:-108.9,width:91.3,height:155.1}
+  };
+  function updateWeapon() {
+    const selected=weapons[weapon];
+    weaponButtons.forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.weapon===weapon)));
+    weaponStatus.textContent='Weapon: '+selected.label+(selected.failed?' (drawn fallback)':'');
+    canvas.setAttribute('aria-label','Animated Runner in a teal outfit, using a '+selected.label.toLowerCase()+' in a forest clearing.');
+  }
+  for(const selected of Object.values(weapons)) {
+    if(!selected.file) continue;
+    selected.image=new Image();
+    selected.image.onerror=()=>{selected.failed=true;updateWeapon();};
+    selected.image.src='source-images/'+selected.file;
+  }
+  weaponButtons.forEach(button=>button.addEventListener('click',()=>{
+    if(!Object.hasOwn(weapons,button.dataset.weapon)) return;
+    weapon=button.dataset.weapon;updateWeapon();
+  }));
   const TAU = Math.PI * 2;
   let mode = 'idle', stance = 'idle', elapsed = 0, attackTime = 0, last = null, travel = 0;
   let jumpTime = 0, slideTime = 0;
@@ -81,7 +125,7 @@
   const armor = 'city';
   const armorStyles = {
     sewer:{label:'Sewer',detail:'Ragged starter clothes',description:'a torn white shirt and ragged brown pants, with no leg armor'},
-    city:{label:'City',detail:'Trail leathers',description:'a teal tunic, light armor, and a flowing amber scarf'},
+    city:{label:'City',detail:'Trail leathers',description:'a teal tunic and light armor'},
     castle:{label:'Castle',detail:'Red and gold plate',description:'full red and gold plate armor and an enclosed helmet with glowing red eyes',base:'#8f2636',shadow:'#4b1724',light:'#c35254',trim:'#d7ad55'},
     darklord:{label:'Dark Lord',detail:'Black and violet',description:'spiked black and violet armor and a golden crown with long spikes',base:'#262033',shadow:'#111018',light:'#534064',trim:'#9e72d1'}
   };
@@ -336,6 +380,38 @@
   function sword(x,y,angle,projection=1) {
     ctx.save(); ctx.translate(x,y); ctx.rotate(angle);
     if(projection!==1) ctx.scale(1,projection);
+    const selected=weapons[weapon];
+    if(selected.image?.complete && selected.image.naturalWidth) {
+      ctx.drawImage(selected.image,selected.x,selected.y,selected.width,selected.height);
+      ctx.restore();return;
+    }
+    if(weapon==='hammer') {
+      line([[0,21],[0,-85]],'#aa591d',6);
+      shape([[-21,-100],[21,-100],[21,-79],[-21,-79]],'#9b9b9b','#282828',2);
+      ctx.restore();return;
+    }
+    if(weapon==='staff') {
+      line([[0,32],[0,-89]],'#d7b52c',6);
+      shape([[-19,-107],[-10,-107],[-14,-95],[0,-78],[14,-95],[10,-107],[19,-107],[20,-93],[0,-75],[-20,-93]],'#e3c427','#4c4120',1.5);
+      shape([[0,-106],[5,-94],[0,-89],[-5,-94]],'#52dfff','#1466a3',1);
+      ctx.restore();return;
+    }
+    if(weapon==='scythe') {
+      line([[0,35],[0,-96]],'#40354b',7);
+      shape([[-13,-91],[3,-109],[39,-98],[61,-71],[24,-88],[3,-95]],'#a8a0bb','#282433',2);
+      ctx.restore();return;
+    }
+    if(weapon==='cutlass') {
+      shape([[-4,-14],[-4,-99],[9,-67],[11,-17]],'#b7c6cd','#29353d',2);
+      line([[0,-10],[0,17]],'#725133',7);line([[-8,-14],[12,-14]],'#c9aa68',3);
+      ctx.restore();return;
+    }
+    if(weapon==='dagger') {
+      shape([[-5,-12],[0,-63],[7,-12],[0,-6]],'#68ddfa','#145fa5',2);
+      line([[0,-3],[0,12]],'#794522',6);line([[-8,-7],[8,-7]],'#96ecff',3);
+      ctx.restore();return;
+    }
+    if(['tribalSword','pungolo','imageSword'].includes(weapon)) ctx.scale(weapon==='tribalSword'?1.6:weapon==='pungolo'?.65:1,selected.reach/114);
     shape([[-5,-14],[-6,-96],[0,-114],[7,-96],[5,-14]],'#c7e1e5');
     shape([[0,-18],[0,-107],[7,-96],[5,-18]],'#799da9',null);
     line([[-3,-24],[-3,-93]],'#f1ffff',1.5);
@@ -466,8 +542,8 @@
     const outer=[],inner=[];
     for(let i=0;i<=16;i++) {
       const sample=upwardSlashPose(mix(Math.max(.38,time-.1),Math.min(time,.82),i/16));
-      outer.push([sample.x+Math.sin(sample.blade)*114,sample.y-Math.cos(sample.blade)*114]);
-      inner.push([sample.x+Math.sin(sample.blade)*85,sample.y-Math.cos(sample.blade)*85]);
+      outer.push([sample.x+Math.sin(sample.blade)*weapons[weapon].reach,sample.y-Math.cos(sample.blade)*weapons[weapon].reach]);
+      inner.push([sample.x+Math.sin(sample.blade)*weapons[weapon].reach*.75,sample.y-Math.cos(sample.blade)*weapons[weapon].reach*.75]);
     }
     ctx.save(); ctx.rotate(-pose.lean);
     ctx.globalAlpha=Math.sin((time-.38)/.5*Math.PI)*.65;
@@ -493,8 +569,8 @@
         const bobOffset=kind==='attack'?
           (Math.sin((t-(p-q)*attacks.attack.duration)*2.5)-Math.sin(t*2.5))*1.7:0;
         const y=sample.y+bobOffset;
-        outer.push([x+Math.sin(angle)*114,y-Math.cos(angle)*114]);
-        inner.push([x+Math.sin(angle)*82,y-Math.cos(angle)*82]);
+        outer.push([x+Math.sin(angle)*weapons[weapon].reach,y-Math.cos(angle)*weapons[weapon].reach]);
+        inner.push([x+Math.sin(angle)*weapons[weapon].reach*.72,y-Math.cos(angle)*weapons[weapon].reach*.72]);
       }
       shape([...outer,...inner.reverse()],'#dcf5ef66',null);
       line(outer,'#efffec',2);
@@ -664,15 +740,6 @@
     }
   }
 
-  // The scarf follows the pace, with a softer wave at rest.
-  function runnerScarf(t, running, sprinting, compact=0) {
-    const length=(sprinting?100:running?80:48)*(1-compact*.65);
-    const lift=running?12:0, wave=Math.sin(t*(running?14:3))*5;
-    shape([[-7,-79],[-25,-76],[-length*.6,-67-lift+wave],[-length,-62-lift-wave],
-      [-length+12,-54-lift-wave],[-length+3,-48-lift-wave],[-length*.55,-54-lift+wave],[-12,-66]],'#d9a54c','#604329',1.5);
-    line([[-21,-72],[-length*.6,-61-lift+wave],[-length+13,-56-lift-wave]],'#f4cd7c',2);
-  }
-
   function practiceHurdle() {
     if(mode!=='jump') return;
     const p=jumpTime/jumpDuration, x=540-360*p;
@@ -733,15 +800,18 @@
     if(bothHands||runningAttack) {
       // A strapped scabbard keeps the blade clear of both swinging hands.
       ctx.save(); ctx.translate(-18,-53); ctx.rotate(-.4);
+      if(weapon!=='sword' && !runningAttack) {
+        sword(0,-12,Math.PI);
+      } else {
       shape([[-5,0],[5,0],[5,85],[0,94],[-5,85]],'#4b392e','#1a2428',2);
       line([[-4,8],[4,8]],'#c0a269',3);
       if(!runningAttack) {
         line([[0,-19],[0,-4]],'#6e503a',7);
         line([[-11,-3],[11,-3]],'#c0a269',4);
       }
+      }
       ctx.restore();
     }
-    runnerScarf(t,running,sprinting,slide*.5);
     // Rear arm and glove.
     const rearUpper=sliding?mix(-.2-Math.sin(cycle)*.85,-.9,slide):mix(jumping&&!baseRunning?.2:-.2-Math.sin(cycle)*.85,-.8,tuck);
     let rearElbow=joint(-5,-49,32,bothHands?rearUpper:running?-.65*Math.sin(cycle)-.3:.2-action*.7+idleElbow);
@@ -787,15 +857,10 @@
     if(raging && attackTime>.2 && attackTime<rageThrustStart+.5) {
       line([[10,-118],[20,-113]],'#462b27',3.5);
       line([[13,-109],[20,-109]],'#b34732',2);
-      shape([[11,-99],[21,-100],[20,-93],[12,-93]],'#62342d',null);
-      line([[13,-97],[19,-97]],'#fff0d3',2.5);
       line([[3,-115],[7,-112]],'#b36b53',1.5);
     }
     }
     ctx.restore();
-    // Wrap the scarf over the collar to anchor its trailing ends.
-    shape([[-13,-80],[9,-79],[14,-71],[3,-67],[-13,-71]],'#d9a54c','#604329',1.5);
-    line([[-10,-76],[6,-73]],'#f4cd7c',2);
     // Leading sword arm: anticipation, fast cut, then recovery.
     let upper=running?.5+Math.sin(cycle)*.45:.35, fore=running?1.8:1.0, blade=running?.55:.3;
     if(bothHands) { upper=mix(jumping&&!baseRunning?.35:-.2+Math.sin(cycle)*.85,1.1,tuck); fore=jumping&&!baseRunning?mix(1,upper+1.7,tuck):upper+1.7; }
@@ -813,7 +878,13 @@
     }
     if(armor==='city') {
     line([[2,-49],elbow],'#152831',23); line([[2,-49],elbow],'#31877b',17);
-    oval(2,-52,12,11,'#b29c71'); line([[-8,-55],[2,-61],[12,-56]],'#e2e8d9',2);
+    // Follow the actual upper arm, including poses solved from the sword hand.
+    const armLength=Math.max(.001,Math.hypot(elbow[0]-2,elbow[1]+49));
+    const armX=(elbow[0]-2)/armLength, armY=(elbow[1]+49)/armLength;
+    ctx.save();
+    ctx.translate(2+armX*2,-52+(armY-1)*1.5); ctx.rotate(-armX*.18);
+    oval(0,0,12,11,'#b29c71'); line([[-10,-3],[0,-9],[10,-4]],'#e2e8d9',2);
+    ctx.restore();
     line([elbow,hand],'#1b3038',19); line([elbow,hand],'#847354',14);
     line([[elbow[0]+3,elbow[1]],[hand[0]+3,hand[1]]],'#d7c296',3);
     } else armArmor([2,-49],elbow,hand,true);
@@ -828,7 +899,7 @@
     if(runningStrike) {
       // Reveal the blade from the hilt as it clears the scabbard.
       ctx.save(); ctx.translate(...hand); ctx.rotate(blade);
-      ctx.beginPath(); ctx.rect(-20,-114*runningStrike.draw,40,114*runningStrike.draw+22); ctx.clip();
+      ctx.beginPath(); ctx.rect(-40,-weapons[weapon].reach*runningStrike.draw,150,weapons[weapon].reach*runningStrike.draw+55); ctx.clip();
       sword(0,0,0); ctx.restore();
     } else if(!bothHands) sword(...hand,blade,pose?pose.reach:1);
     if(rageGrip>0) { ctx.save();ctx.globalAlpha=rageGrip;oval(...rearHand,7,7,'#654b39');ctx.restore(); }

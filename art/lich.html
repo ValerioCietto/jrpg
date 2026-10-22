@@ -58,7 +58,7 @@
   'use strict';
   const canvas=document.querySelector('#lich'),ctx=canvas.getContext('2d');
   const buttons=[...document.querySelectorAll('[data-mode]')],status=document.querySelector('#status');
-  const scythe=new Image();scythe.src='dark-scythe.png';
+  const scythe=new Image();scythe.src='source-images/dark-scythe.png';
   scythe.onerror=()=>{document.querySelector('#asset-status').textContent='Dark scythe image unavailable · showing a drawn scythe.';};
   const TAU=Math.PI*2,clamp=t=>Math.max(0,Math.min(1,t)),mix=(a,b,t)=>a+(b-a)*t;
   const ease=t=>{t=clamp(t);return t*t*(3-2*t);};
